@@ -45,9 +45,9 @@
 #define ERROR_PCAL6416A
 
 #ifdef DEBUG_PCAL6416A
-	#define LOG_DEBUG(...) printf(__VA_ARGS__);
+        #define LOG_DEBUG(...) printf(__VA_ARGS__);
 #else
-	#define LOG_DEBUG(...)
+        #define LOG_DEBUG(...)
 #endif
 
 #ifdef ERROR_PCAL6416A
@@ -93,15 +93,15 @@ bool pcal6416a_init(void)
     for (i = 0, i2c_expander_addr = 0; i2c_chip[i].address; i++) {
 
         if (ioctl(fd_i2c_expander, I2C_SLAVE_FORCE, i2c_chip[i]) < 0 ||
-	    pcal6416a_read_mask_interrupts() < 0) {
+            pcal6416a_read_mask_interrupts() < 0) {
             LOG_DEBUG("Failed to acquire bus access and/or talk to slave %s at address 0x%02X.\n",
                 i2c_chip[i].name, i2c_chip[i].address);
-    	} else {
-    	    LOG_DEBUG("Found I2C gpio expander chip %s at address 0x%02X\n",
-    	        i2c_chip[i].name, i2c_chip[i].address);
-    	    i2c_expander_addr = i2c_chip[i].address;
+        } else {
+            LOG_DEBUG("Found I2C gpio expander chip %s at address 0x%02X\n",
+                i2c_chip[i].name, i2c_chip[i].address);
+            i2c_expander_addr = i2c_chip[i].address;
             break;
-    	}
+        }
     }
 
     /* GPIO expander chip found? */

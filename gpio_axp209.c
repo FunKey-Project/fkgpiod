@@ -39,9 +39,9 @@
 #define ERROR_AXP209
 
 #ifdef DEBUG_AXP209
-	#define LOG_DEBUG(...) printf(__VA_ARGS__);
+        #define LOG_DEBUG(...) printf(__VA_ARGS__);
 #else
-	#define LOG_DEBUG(...)
+        #define LOG_DEBUG(...)
 #endif
 
 #ifdef ERROR_AXP209

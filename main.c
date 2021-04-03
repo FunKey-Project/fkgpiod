@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
         handle_gpio_mapping(&mapping_list);
     }
 
-    /*Deinitialize the GPIO mapping */
+    /* Deinitialize the GPIO mapping */
     deinit_gpio_mapping();
 
     /* Close the uinput device */

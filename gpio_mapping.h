@@ -35,4 +35,4 @@ bool init_gpio_mapping(const char* config_filename,
 void deinit_gpio_mapping(void);
 void handle_gpio_mapping(mapping_list_t *mapping_list);
 
-#endif	//_GPIO_MAPPING_H_
+#endif  //_GPIO_MAPPING_H_

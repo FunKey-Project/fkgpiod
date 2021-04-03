@@ -68,7 +68,7 @@
 
 #define SHORT_PEK_PRESS_DURATION_US             (200 * 1000)
 
-#define GPIO_PIN_I2C_EXPANDER_INTERRUPT	        ((('B' - '@') << 4) + 3) // PB3
+#define GPIO_PIN_I2C_EXPANDER_INTERRUPT         ((('B' - '@') << 4) + 3) // PB3
 #define GPIO_PIN_AXP209_INTERRUPT               ((('B' - '@') << 4) + 5) // PB5
 
 #define SHORT_PEK_PRESS_GPIO_MASK               (1 << 5)
@@ -331,7 +331,7 @@ void handle_gpio_mapping(mapping_list_t *list)
                     system(mapping->value.command);
                 }
             }
-	    }
+            }
 
         /* Proccess the Power Enable Key (PEK) long keypress, the AXP209
          * will shutdown the system in 3s anyway
@@ -412,7 +412,7 @@ void handle_gpio_mapping(mapping_list_t *list)
         }
     }
 
-	/* Apply the mapping for the current gpio mask */
-	apply_mapping(list, current_gpio_mask);
+        /* Apply the mapping for the current gpio mask */
+        apply_mapping(list, current_gpio_mask);
     return;
 }

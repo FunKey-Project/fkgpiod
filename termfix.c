@@ -1,6 +1,6 @@
 /*
     Copyright (C) 2020-2021 Vincent Buso <vincent.buso@funkey-project.com>
-    Copyright (C) 2020-2021 Michel Stempin <michel.stempin@funkey-project.com>
+    Copyright (C) 2021 Michel Stempin <michel.stempin@funkey-project.com>
 
     This file is part of the FunKey S GPIO keyboard daemon.
 

@@ -28,7 +28,6 @@
 #ifndef _GPIO_AXP209_H_
 #define _GPIO_AXP209_H_
 
-
 #include <stdbool.h>
 
 /* Chip physical address */
