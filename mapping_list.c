@@ -71,8 +71,8 @@
  * process
  */
 #define list_for_each_safe(pos, n, head) \
-        for (pos = (head)->next, n = pos->next; pos != (head); \
-                pos = n, n = pos->next)
+    for (pos = (head)->next, n = pos->next; pos != (head); \
+        pos = n, n = pos->next)
 
 /* Add a mapping between a previous and a next one */
 static inline void list_add_between(struct mapping_list_t *new,
@@ -95,21 +95,21 @@ static inline void list_add(struct mapping_list_t *new,
 static inline void list_add_tail(struct mapping_list_t *new,
     struct mapping_list_t *head)
 {
-        list_add_between(new, head->prev, head);
+    list_add_between(new, head->prev, head);
 }
 
 /* Delete a mapping between a previous and a next one */
 static inline void list_delete_between(struct mapping_list_t *prev,
     struct mapping_list_t *next)
 {
-        next->prev = prev;
-        prev->next = next;
+    next->prev = prev;
+    prev->next = next;
 }
 
 /* Delete a mapping from the mapping list */
 static inline void list_delete(struct mapping_list_t *entry)
 {
-        list_delete_between(entry->prev, entry->next);
+    list_delete_between(entry->prev, entry->next);
 }
 
 /* Initalize a mapping list */
