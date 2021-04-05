@@ -66,18 +66,34 @@
 //#define TIMEOUT_SEC_SANITY_CHECK_GPIO_EXP     1
 #define TIMEOUT_MICROSEC_SANITY_CHECK_GPIO_EXP  (30 * 1000)
 
+/* Short Power Enable Key (PEK) duration in microseconds */
 #define SHORT_PEK_PRESS_DURATION_US             (200 * 1000)
 
+/* PCAL6416A I2C GPIO expander interrupt pin */
 #define GPIO_PIN_I2C_EXPANDER_INTERRUPT         ((('B' - '@') << 4) + 3) // PB3
+
+/* AXP209 I2C PMIC interrupt pin */
 #define GPIO_PIN_AXP209_INTERRUPT               ((('B' - '@') << 4) + 5) // PB5
 
+/* Pseudo-bitmask for the short PEK key press */
 #define SHORT_PEK_PRESS_GPIO_MASK               (1 << 5)
+
+/* Pseudo-bitmask for the NOE signal */
 #define NOE_GPIO_MASK                           (1 << 10)
+
+/* Shell command for shutdown upon receiving either long PEK or NOE signal */
 #define SHELL_COMMAND_SHUTDOWN                  "sched_shutdown 0.1"
 
+/* PCAL6416A/PCAL9539A I2C GPIO expander chip pseudo-file descriptor */
 static int fd_pcal6416a;
+
+/* AXP209 I2C PMIC pseudo-file descriptor */
 static int fd_axp209;
+
+/* Mask of monitored GPIOs */
 static uint32_t monitored_gpio_mask;
+
+/* Mask of current GPIOs */
 static uint32_t current_gpio_mask;
 
 /* Search for the GPIO mask into the mapping and apply the required actions */
@@ -254,12 +270,18 @@ void handle_gpio_mapping(mapping_list_t *list)
     FD_SET(fd_axp209, &fds);
     max_fd = (fd_pcal6416a > fd_axp209) ? fd_pcal6416a : fd_axp209;
 #ifdef TIMEOUT_MICROSEC_SANITY_CHECK_GPIO_EXP
+
+    /* Select with normal (short) timeout */
     struct timeval timeout = {0, TIMEOUT_MICROSEC_SANITY_CHECK_GPIO_EXP};
     result = select(max_fd + 1, NULL, NULL, &fds, &timeout);
 #elif TIMEOUT_SEC_SANITY_CHECK_GPIO_EXP
+
+    /* Select with debug (slow) timeout */
     struct timeval timeout = {TIMEOUT_SEC_SANITY_CHECK_GPIO_EXP, 0};
     result = select(max_fd + 1, NULL, NULL, &fds, &timeout);
 #else
+
+    /* Select with no timeout */
     result = select(max_fd + 1, NULL, NULL, &fds, NULL);
 #endif
     if (result == 0) {
