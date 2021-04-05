@@ -3,8 +3,12 @@ fkgpiod version 0.0.1
 FunKey S GPIO daemon
 
 Copyright (C) 2020-2021, Vincent Buso <vincent.buso@funkey-project.com>,
+
+
 Copyright (C) 2021, Michel Stempin  <michel.stempin@funkey-project.com>,
+
 All rights reserved.
+
 Released under the GNU Lesser General Public License version 2.1 or later
 
 ```
