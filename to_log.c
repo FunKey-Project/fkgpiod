@@ -81,5 +81,6 @@ static cookie_io_functions_t log_fns = {
 /* Redirect given file output descriptor to syslog */
 void to_log(FILE **pfp)
 {
-    setvbuf(*pfp = fopencookie(NULL, "w", log_fns), NULL, _IOLBF, 0);
+    //setvbuf(*pfp = fopencookie(NULL, "w", log_fns), NULL, _IOLBF, 0); //not working with muslc
+    setvbuf(*pfp, NULL, _IOLBF, 0);
 }

@@ -213,10 +213,15 @@ int main(int argc, char *argv[])
     if (daemon) {
 
         /* Run as a background daemon, redirect all output to syslog */
+        printf("Func %s, line %d\n", __func__, __LINE__);
         openlog("fkgpiod", LOG_PERROR | LOG_PID | LOG_NDELAY, LOG_DAEMON);
+        printf("Func %s, line %d\n", __func__, __LINE__);
         to_log(&stdout);
+        printf("Func %s, line %d\n", __func__, __LINE__);
         to_log(&stderr);
+        printf("Func %s, line %d\n", __func__, __LINE__);
         daemonize("/", PID_FILE);
+        printf("Func %s, line %d\n", __func__, __LINE__);
     }
 
     /* Initialize the uinput device */
