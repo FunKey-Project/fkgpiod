@@ -186,7 +186,7 @@ const char *keycode_name(int keycode)
 
 /* Parse a configuration line */
 bool parse_config_line(char *line, mapping_list_t *list,
-    uint32_t *active_gpio_mask)
+    uint32_t *monitored_gpio_mask)
 {
     int button_count = 0, button, key = 0;
     parse_state_t state = STATE_INIT;
@@ -350,7 +350,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
                 gpio_mask);
             return false;
         }
-        *active_gpio_mask &= ~gpio_mask;
+        *monitored_gpio_mask &= ~gpio_mask;
         break;
 
     case STATE_RESET:
@@ -360,7 +360,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
 
     case STATE_FILE:
         LOG_DEBUG("LOAD file \"%s\"\n", buffer);
-        return parse_config_file(buffer, list, active_gpio_mask);
+        return parse_config_file(buffer, list, monitored_gpio_mask);
         break;
 
     case STATE_DELAY:
@@ -410,7 +410,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
                     gpio_mask);
                 return false;
             }
-            *active_gpio_mask |= gpio_mask;
+            *monitored_gpio_mask |= gpio_mask;
             break;
 
         default:
@@ -462,7 +462,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
 
 /* Parse a configuration file */
 bool parse_config_file(const char *name, mapping_list_t *list,
-    uint32_t *active_gpio_mask)
+    uint32_t *monitored_gpio_mask)
 {
     FILE *fp;
     int line_number = 0;
@@ -491,7 +491,7 @@ bool parse_config_file(const char *name, mapping_list_t *list,
         strtok(line, "\r\n");
 
         /* Parse a configuration line */
-        if (parse_config_line(line, list, active_gpio_mask) == false) {
+        if (parse_config_line(line, list, monitored_gpio_mask) == false) {
             LOG_ERROR("line %d\n", line_number);
             break;
         }

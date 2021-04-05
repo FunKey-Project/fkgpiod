@@ -85,8 +85,8 @@ typedef enum {PARSE_STATES} parse_state_t;
 const char *gpio_name(uint8_t gpio);
 const char *keycode_name(int keycode);
 bool parse_config_line(char *line, mapping_list_t *list,
-    uint32_t *active_gpio_mask);
+    uint32_t *monitored_gpio_mask);
 bool parse_config_file(const char *name, mapping_list_t *list,
-    uint32_t *active_gpio_mask);
+    uint32_t *monitored_gpio_mask);
 
 #endif //_PARSE_H_

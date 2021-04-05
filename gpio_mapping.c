@@ -77,7 +77,7 @@
 
 static int fd_pcal6416a;
 static int fd_axp209;
-static uint32_t active_gpio_mask;
+static uint32_t monitored_gpio_mask;
 static uint32_t current_gpio_mask;
 
 /* Search for the GPIO mask into the mapping and apply the required actions */
@@ -178,7 +178,7 @@ bool init_gpio_mapping(const char *config_filename,
     init_mapping_list(mapping_list);
 
     /* Read the configuration file to get all valid GPIO mappings */
-    if (parse_config_file(config_filename, mapping_list, &active_gpio_mask) ==
+    if (parse_config_file(config_filename, mapping_list, &monitored_gpio_mask) ==
         false) {
         return false;
     }
@@ -188,7 +188,7 @@ bool init_gpio_mapping(const char *config_filename,
 #endif // DEBUG_GPIO
 
     /* Force the NOE GPIO to be an active GPIO as it is not in the mapping */
-    active_gpio_mask |= NOE_GPIO_MASK;
+    monitored_gpio_mask |= NOE_GPIO_MASK;
 
     /* Clear the current GPIO mask */
     current_gpio_mask = 0;
@@ -318,7 +318,9 @@ void handle_gpio_mapping(mapping_list_t *list)
             mapping = find_mapping(list, SHORT_PEK_PRESS_GPIO_MASK);
             if (mapping != NULL) {
                 LOG_DEBUG("Found matching mapping:\n");
+#ifdef DEBUG_GPIO
                 dump_mapping(mapping);
+#endif // DEBUG_GPIO
                 if (mapping->type == MAPPING_KEY) {
                     LOG_DEBUG("\t--> Key press and release %d\n",
                         mapping->value.keycode);
@@ -367,9 +369,9 @@ void handle_gpio_mapping(mapping_list_t *list)
             return;
         }
 
-        /* Keep only active GPIOS */
-        interrupt_mask &= active_gpio_mask;
-        current_gpio_mask &= active_gpio_mask;
+        /* Keep only monitored GPIOS */
+        interrupt_mask &= monitored_gpio_mask;
+        current_gpio_mask &= monitored_gpio_mask;
 
         /* Invert the active low N_NOE GPIO signal */
         current_gpio_mask ^= (NOE_GPIO_MASK);
