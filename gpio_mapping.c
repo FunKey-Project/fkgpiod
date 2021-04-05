@@ -134,10 +134,7 @@ static void apply_mapping(mapping_list_t *list, uint32_t gpio_mask)
 #endif // DEBUG_GPIO
             if (mapping->activated == false) {
 
-                /* Mapping is not yet active, subtract the matching GPIOs from
-                 * the current GPIO mask and activate it
-                 */
-                gpio_mask ^= mapping->gpio_mask;
+                /* Activate mapping */
                 mapping->activated = true;
                 if (mapping->type == MAPPING_KEY) {
 
@@ -152,6 +149,11 @@ static void apply_mapping(mapping_list_t *list, uint32_t gpio_mask)
                     system(mapping->value.command);
                 }
             }
+
+            /* Subtract the matching GPIOs from
+             * the current GPIO mask and activate it
+             */
+            gpio_mask ^= mapping->gpio_mask;
         } else if (mapping->activated) {
 
             /* Non-matching activated mapping, deactivate it */
