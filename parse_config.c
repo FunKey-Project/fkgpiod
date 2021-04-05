@@ -36,7 +36,7 @@
 #include "parse_config.h"
 #include "uinput.h"
 
-//#define DEBUG_CONFIG
+#define DEBUG_CONFIG
 #define ERROR_CONFIG
 
 #ifdef DEBUG_CONFIG
@@ -192,6 +192,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
     parse_state_t state = STATE_INIT;
     char *token, *next_token, *token_end = NULL, *s;
     bool expecting_button = true;
+    bool skip_read_token = false;
     uint32_t gpio_mask = 0;
     mapping_t *existing_mapping, new_mapping;
 
@@ -294,6 +295,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
         case STATE_KEYDOWN:
         case STATE_KEYPRESS:
             state = STATE_KEY;
+            skip_read_token = true;
             break;
 
         case STATE_FUNCTION:
@@ -323,7 +325,10 @@ bool parse_config_line(char *line, mapping_list_t *list,
             LOG_ERROR("Unknown state %d\n", state);
             return false;
         }
-        token = strtok_r(NULL, " \t", &next_token);
+        if (!skip_read_token){
+            token = strtok_r(NULL, " \t", &next_token);
+        }
+        skip_read_token=false;
     }
     switch (state) {
     case STATE_UNMAP:
