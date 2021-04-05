@@ -63,14 +63,11 @@ typedef enum {GPIOS} button_t;
     X(STATE_UNMAP, "UNMAP") \
     X(STATE_RESET, "RESET") \
     X(STATE_LOAD, "LOAD") \
-    X(STATE_FILE, "FILE") \
     X(STATE_SLEEP, "SLEEP") \
-    X(STATE_DELAY, "DELAY") \
     X(STATE_KEYUP, "KEYUP") \
     X(STATE_KEYDOWN, "KEYDOWN") \
     X(STATE_KEYPRESS, "KEYPRESS") \
     X(STATE_TYPE, "TYPE") \
-    X(STATE_TEXT, "TEXT") \
     X(STATE_FUNCTION, "FUNCTION") \
     X(STATE_KEY, "KEY") \
     X(STATE_COMMAND, "COMMAND")\

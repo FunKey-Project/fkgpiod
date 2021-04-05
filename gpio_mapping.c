@@ -110,9 +110,6 @@ static uint32_t current_gpio_mask;
 /* Total bytes read from the FIFO */
 static size_t total_bytes = 0;
 
-/* Total bytes to write to the FIFO */
-static size_t bytes_to_write = 0;
-
 /* FIFO buffer */
 char fifo_buffer[256];
 
@@ -296,8 +293,8 @@ void deinit_gpio_mapping(void)
 void handle_gpio_mapping(mapping_list_t *list)
 {
     int result, gpio, int_status, max_fd, fd, val_int_bank_3;
-    ssize_t read_bytes, bytes_written;
-    fd_set read_fds, write_fds, except_fds;
+    ssize_t read_bytes;
+    fd_set read_fds, except_fds;
     uint32_t interrupt_mask, previous_gpio_mask;
     bool pcal6416a_interrupt = false;
     bool axp209_interrupt = false;
@@ -309,11 +306,9 @@ void handle_gpio_mapping(mapping_list_t *list)
     previous_gpio_mask = current_gpio_mask;
     current_gpio_mask = 0;
 
-    /* Listen to FIFO read/write availability */
+    /* Listen to FIFO read availability */
     FD_ZERO(&read_fds);
     FD_SET(fd_fifo, &read_fds);
-    FD_ZERO(&write_fds);
-    FD_SET(fd_fifo, &write_fds);
 
     /* Listen to interrupt exceptions */
     FD_ZERO(&except_fds);
@@ -333,11 +328,11 @@ void handle_gpio_mapping(mapping_list_t *list)
 
     /* Select with debug (slow) timeout */
     struct timeval timeout = {TIMEOUT_SEC_SANITY_CHECK_GPIO_EXP, 0};
-    result = select(max_fd + 1, &read_fds, &write_fds, &except_fds, &timeout);
+    result = select(max_fd + 1, &read_fds, NULL, &except_fds, &timeout);
 #else
 
     /* Select with no timeout */
-    result = select(max_fd + 1, &read_fds, &write_fds, &except_fds, NULL);
+    result = select(max_fd + 1, &read_fds, NULL, &except_fds, NULL);
 #endif
     if (result == 0) {
 
@@ -380,27 +375,6 @@ void handle_gpio_mapping(mapping_list_t *list)
                     break;
                 } else {
                     LOG_ERROR("Cannot read from FIFO: %s\n", strerror(errno));
-                    return;
-                }
-            }
-        }
-
-        /* Check if we can write something to the FIFO */
-        if (FD_ISSET(fd_fifo, &write_fds)) {
-            while (bytes_to_write) {
-                bytes_written = write(fd_fifo, fifo_buffer, bytes_to_write);;
-                if (bytes_written > 0) {
-                    bytes_to_write -= bytes_written;
-                    LOG_DEBUG("Wrote %d bytes to FIFO: \"%.*s\"\n",
-                        (int) bytes_written, (int) bytes_written, fifo_buffer);
-                } else if (errno == EWOULDBLOCK) {
-
-                    /* FIFO is full */
-                    LOG_DEBUG("FIFO is full, %d bytes left to write\n",
-                        (int) bytes_to_write);
-                    break;
-                } else {
-                    LOG_ERROR("Cannot write to FIFO: %s\n", strerror(errno));
                     return;
                 }
             }

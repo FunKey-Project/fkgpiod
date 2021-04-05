@@ -277,34 +277,23 @@ bool parse_config_line(char *line, mapping_list_t *list,
         case STATE_DUMP:
             break;
 
-        case STATE_LOAD:
-            state = STATE_FILE;
-            break;
-
         case STATE_SLEEP:
-            state = STATE_DELAY;
-            break;
-
-        case STATE_KEYUP:
-        case STATE_KEYDOWN:
-        case STATE_KEYPRESS:
-            state = STATE_KEY;
-            break;
-
-        case STATE_TYPE:
-            state = STATE_TEXT;
-            break;
-
-        case STATE_DELAY:
             for (s = token; *s; s++) {
                 if (!isdigit(*s)) {
                     LOG_ERROR("Invalid delay \"%s\"\n", token);
                     return false;
                 }
             }
-        case STATE_FILE:
-        case STATE_TEXT:
+        case STATE_LOAD:
+        case STATE_TYPE:
             strncpy(buffer, token, MAX_LINE_LENGTH);
+            break;
+
+
+        case STATE_KEYUP:
+        case STATE_KEYDOWN:
+        case STATE_KEYPRESS:
+            state = STATE_KEY;
             break;
 
         case STATE_FUNCTION:
@@ -359,17 +348,18 @@ bool parse_config_line(char *line, mapping_list_t *list,
         reset_mapping_list(list);
         break;
 
-    case STATE_FILE:
+    case STATE_LOAD:
         LOG_DEBUG("LOAD file \"%s\"\n", buffer);
         return parse_config_file(buffer, list, monitored_gpio_mask);
         break;
 
-    case STATE_DELAY:
+    case STATE_SLEEP:
         LOG_DEBUG("SLEEP delay %s ms\n", buffer);
         usleep(atoi(buffer) * 1000);
         break;
 
-    case STATE_TEXT:
+    case STATE_TYPE:
+        LOG_DEBUG("TYPE \"%s\"\n", buffer);
         break;
 
     case STATE_KEY:
@@ -452,9 +442,6 @@ bool parse_config_line(char *line, mapping_list_t *list,
         break;
 
     case STATE_MAP:
-    case STATE_LOAD:
-    case STATE_SLEEP:
-    case STATE_TYPE:
        break;
 
     default:
