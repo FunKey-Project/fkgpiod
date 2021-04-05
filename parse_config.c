@@ -36,7 +36,7 @@
 #include "parse_config.h"
 #include "uinput.h"
 
-#define DEBUG_CONFIG
+//#define DEBUG_CONFIG
 #define ERROR_CONFIG
 
 #ifdef DEBUG_CONFIG
