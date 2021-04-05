@@ -79,7 +79,7 @@ static const keyword_t valid_commands[] = {
     {"KEYDOWN", STATE_KEYDOWN},
     {"KEYPRESS", STATE_KEYPRESS},
     {"TYPE", STATE_TYPE},
-    {"HELP", STATE_HELP},
+    {"DUMP", STATE_DUMP},
     {"", STATE_INVALID}
 };
 
@@ -274,6 +274,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
             break;
 
         case STATE_RESET:
+        case STATE_DUMP:
             break;
 
         case STATE_LOAD:
@@ -446,11 +447,14 @@ bool parse_config_line(char *line, mapping_list_t *list,
         }
         break;
 
+    case STATE_DUMP:
+        dump_mapping_list(list);
+        break;
+
     case STATE_MAP:
     case STATE_LOAD:
     case STATE_SLEEP:
     case STATE_TYPE:
-    case STATE_HELP:
        break;
 
     default:

@@ -74,7 +74,7 @@ typedef enum {GPIOS} button_t;
     X(STATE_FUNCTION, "FUNCTION") \
     X(STATE_KEY, "KEY") \
     X(STATE_COMMAND, "COMMAND")\
-    X(STATE_HELP, "HELP") \
+    X(STATE_DUMP, "DUMP") \
     X(STATE_INVALID, "INVALID")
 
 /* Enumeration of the different parse states */
