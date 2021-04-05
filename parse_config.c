@@ -72,7 +72,7 @@ static const char *gpio_names[] = {GPIOS};
 static const keyword_t valid_commands[] = {
     {"MAP", STATE_MAP},
     {"UNMAP", STATE_UNMAP},
-    {"RESET", STATE_RESET},
+    {"CLEAR", STATE_CLEAR},
     {"LOAD", STATE_LOAD},
     {"SLEEP", STATE_SLEEP},
     {"KEYUP", STATE_KEYUP},
@@ -274,7 +274,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
             } while (token_end != NULL);
             break;
 
-        case STATE_RESET:
+        case STATE_CLEAR:
         case STATE_DUMP:
             break;
 
@@ -348,9 +348,9 @@ bool parse_config_line(char *line, mapping_list_t *list,
         *monitored_gpio_mask &= ~gpio_mask;
         break;
 
-    case STATE_RESET:
-        LOG_DEBUG("RESET\n");
-        reset_mapping_list(list);
+    case STATE_CLEAR:
+        LOG_DEBUG("CLEAR\n");
+        clear_mapping_list(list);
         break;
 
     case STATE_LOAD:

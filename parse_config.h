@@ -61,7 +61,7 @@ typedef enum {GPIOS} button_t;
     X(STATE_INIT, "INIT") \
     X(STATE_MAP, "MAP") \
     X(STATE_UNMAP, "UNMAP") \
-    X(STATE_RESET, "RESET") \
+    X(STATE_CLEAR, "CLEAR") \
     X(STATE_LOAD, "LOAD") \
     X(STATE_SLEEP, "SLEEP") \
     X(STATE_KEYUP, "KEYUP") \

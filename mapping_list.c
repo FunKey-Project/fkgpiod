@@ -119,8 +119,8 @@ void init_mapping_list(mapping_list_t *list)
     list->prev = list;
 }
 
-/* Empty a mpping list */
-void reset_mapping_list(mapping_list_t *list)
+/* Clear a mapping list */
+void clear_mapping_list(mapping_list_t *list)
 {
     struct mapping_list_t *p, *n;
     mapping_t *tmp;

@@ -59,7 +59,7 @@ typedef struct mapping_t {
 } mapping_t;
 
 void init_mapping_list(mapping_list_t *list);
-void reset_mapping_list(mapping_list_t *list);
+void clear_mapping_list(mapping_list_t *list);
 mapping_t *first_mapping(mapping_list_t *list);
 mapping_t *next_mapping(mapping_t *mapping);
 bool last_mapping(const mapping_list_t *list, const mapping_t *mapping);

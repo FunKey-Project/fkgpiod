@@ -28,6 +28,7 @@ $ echo "LOAD /etc/fkgpiod.conf" > /tmp/fkgpiod.fifo
 ## Available script commands (commands are not case sensitive):
 
 ```
+CLEAR                                               Clear the button mapping
 DUMP                                                Dump the button mapping
 KEYDOWN <key_code>                                  Send a key down event with the given keycode
 KEYPRESS <key_code>                                 Send key press event with the given keycode
@@ -35,7 +36,6 @@ KEYUP <key_code>                                    Send a key up event with the
 LOAD <configuration_file>                           Load a configuration file
 MAP <button_combination> TO KEY <key_code>          Map a button combination to a keycode
 MAP <button_combination> TO COMMAND <shell_command> Map a button combination to a Shell command
-RESET                                               Reset the button mapping
 SLEEP <delays_ms>                                   Sleep for the given delay in ms
 TYPE <character_string>                             Type in a character string
 UNMAP <button_combination>                          Unmap a button combination
@@ -48,13 +48,15 @@ where:
  - <configuration_file> is the full path to a configurtion file
  - <delay_ms> is a delay in ms
  - <character_string> is a character string
- - <key_code> is among:
+ - <key_code>  is taken from the Linux key and button codes
+   (https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h),
+   which in turn is modeled after USB HUT 1.12 (see http://www.usb.org/developers/hidpage):
    - KEY_0 to KEY_9, KEY_A to KEY_Z
    - KEY_F1 to KEY_F24, KEY_KP0 to KEY_KP9, KEY_PROG1 to KEY_PROG4
    - BTN_0 to BTN_9, BTN_A to BTN_C, BTN_X to BTN_Z, BTN_BASE2 to BTN_BASE6
    - BTN_BACK, BTN_BASE, BTN_DEAD, BTN_EXTRA, BTN_FORWARD, BTN_GAMEPAD, BTN_JOYSTICK, BTN_LEFT,
      BTN_MIDDLE, BTN_MISC, BTN_MODE, BTN_MOUSE, BTN_PINKIE, BTN_RIGHT, BTN_SELECT, BTN_SIDE,
-     BTN_START, BTN_TASK, BTN_THUMB, BTN_THUMB2, BTN_THUMBL, BTN_THUMBR, BTN_TL, BTN_TL2, 
+     BTN_START, BTN_TASK, BTN_THUMB, BTN_THUMB2, BTN_THUMBL, BTN_THUMBR, BTN_TL, BTN_TL2,
      BTN_TOP, BTN_TOP2, BTN_TR, BTN_TR2, BTN_TRIGGER,
    - KEY_102ND, KEY_AGAIN, KEY_ALTERASE, KEY_APOSTROPHE, KEY_BACK, KEY_BACKSLASH, KEY_BACKSPACE,
      KEY_BASSBOOST, KEY_BATTERY, KEY_BLUETOOTH, KEY_BOOKMARKS, KEY_BRIGHTNESSDOWN,
