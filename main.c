@@ -48,12 +48,68 @@ static const char *config_file = "fkgpiod.conf";
 /* Print usage information */
 static void print_usage(void)
 {
-    printf("Usage: fkgpiod [options] [config_file]\n");
-    printf("Options:\n");
-    printf(" -d, -D, --daemonize                              Launch as a background daemon\n");
-    printf(" -h, -H, --help                                   Print option help\n");
-    printf(" -k, -K, --kill                                   Kill background daemon\n");
-    printf(" -v, --version                                    Print version information\n");
+    printf("Usage: fkgpiod [options] [config_file]\n"
+           "Options:\n"
+           " -d, -D, --daemonize                                Launch as a background daemon\n"
+           " -h, -H, --help                                     Print option help\n"
+           " -k, -K, --kill                                     Kill background daemon\n"
+           " -v, --version                                      Print version information\n"
+           "\n"
+           "Available script commands (commands are not case sensitive):\n"
+           "-----------------------------------------------------------\n"
+           "DUMP                                                Dump the button mapping\n"
+           "KEYDOWN <keycode>                                   Send a key down event with the given keycode\n"
+           "KEYPRESS <keycode>                                  Send key press event with the given keycode\n"
+           "KEYUP <keycode>                                     Send a key up event with the given keycode\n"
+           "LOAD <configuration_file>                           Load a configuration file\n"
+           "MAP <button_combination> TO KEY <keycode>           Map a button combination to a keycode\n"
+           "MAP <button_combination> TO COMMAND <shell_command> Map a button combination to a Shell command\n"
+           "RESET                                               Reset the button mapping\n"
+           "SLEEP <delays_ms>                                   Sleep for the given delay in ms\n"
+           "TYPE <string>                                       Type in a string\n"
+           "UNMAP <button_combination>                          Unmap a button combination\n"
+           "\n"
+           "where:\n"
+           " - <button_combination> is a list of UP, DOWN, LEFT, RIGHT, A, B, L, R, X, Y, MENU, START or FN\n"
+           "   separated by \"+\" signs\n"
+           " - <shell_command> is any valid Shell command with its arguments\n"
+           " - <configuration_file> is the full path to a configurtion file\n"
+           " - <delay_ms> is a delay in ms\n"
+           " - <string> is a character string\n"
+           " - <keycode> is among:\n"
+           "   - KEY_0 to KEY_9, KEY_A to KEY_Z\n"
+           "   - KEY_F1 to KEY_F24, KEY_KP0 to KEY_KP9, KEY_PROG1 to KEY_PROG4\n"
+           "   - BTN_0 to BTN_9, BTN_A to BTN_C, BTN_X to BTN_Z, BTN_BASE2 to BTN_BASE6\n"
+           "   - BTN_BACK, BTN_BASE, BTN_DEAD, BTN_EXTRA, BTN_FORWARD, BTN_GAMEPAD, BTN_JOYSTICK, BTN_LEFT,\n"
+           "     BTN_MIDDLE, BTN_MISC, BTN_MODE, BTN_MOUSE, BTN_PINKIE, BTN_RIGHT, BTN_SELECT, BTN_SIDE,\n"
+           "     BTN_START, BTN_TASK, BTN_THUMB, BTN_THUMB2, BTN_THUMBL, BTN_THUMBR, BTN_TL, BTN_TL2, \n"
+           "     BTN_TOP, BTN_TOP2, BTN_TR, BTN_TR2, BTN_TRIGGER,\n"
+           "   - KEY_102ND, KEY_AGAIN, KEY_ALTERASE, KEY_APOSTROPHE, KEY_BACK, KEY_BACKSLASH, KEY_BACKSPACE,\n"
+           "     KEY_BASSBOOST, KEY_BATTERY, KEY_BLUETOOTH, KEY_BOOKMARKS, KEY_BRIGHTNESSDOWN,\n"
+           "     KEY_BRIGHTNESSUP, KEY_BRIGHTNESS_CYCLE, KEY_BRIGHTNESS_ZERO, KEY_CALC, KEY_CAMERA,\n"
+           "     KEY_CANCEL, KEY_CAPSLOCK, KEY_CHAT, KEY_CLOSE, KEY_CLOSECD, KEY_COFFEE, KEY_COMMA,\n"
+           "     KEY_COMPOSE, KEY_COMPUTER, KEY_CONFIG, KEY_CONNECT, KEY_COPY, KEY_CUT, KEY_CYCLEWINDOWS,\n"
+           "     KEY_DASHBOARD, KEY_DELETE, KEY_DELETEFILE, KEY_DIRECTION, KEY_DISPLAY_OFF, KEY_DOCUMENTS,\n"
+           "     KEY_DOT, KEY_DOWN, KEY_EDIT, KEY_EJECTCD, KEY_EJECTCLOSECD, KEY_EMAIL, KEY_END, KEY_ENTER,\n"
+           "     KEY_EQUAL, KEY_ESC, KEY_EXIT, KEY_FASTFORWARD, KEY_FILE, KEY_FINANCE, KEY_FIND,\n"
+           "     KEY_FORWARD, KEY_FORWARDMAIL, KEY_FRONT, KEY_GRAVE, KEY_HANGEUL, KEY_HANGUEL, KEY_HANJA,\n"
+           "     KEY_HELP, KEY_HENKAN, KEY_HIRAGANA, KEY_HOME, KEY_HOMEPAGE, KEY_HP, KEY_INSERT, KEY_ISO,\n"
+           "     KEY_KATAKANA, KEY_KATAKANAHIRAGANA, KEY_KBDILLUMDOWN, KEY_KBDILLUMTOGGLE, KEY_KBDILLUMUP,\n"
+           "     KEY_KPASTERISK,KEY_KPCOMMA, KEY_KPDOT, KEY_KPENTER, KEY_KPEQUAL, KEY_KPJPCOMMA,\n"
+           "     KEY_KPLEFTPAREN, KEY_KPMINUS, KEY_KPPLUS, KEY_KPPLUSMINUS, KEY_KPRIGHTPAREN, KEY_KPSLASH,\n"
+           "     KEY_LEFT, KEY_LEFTALT, KEY_LEFTBRACE, KEY_LEFTCTRL, KEY_LEFTMETA, KEY_LEFTSHIFT,\n"
+           "     KEY_LINEFEED, KEY_MACRO, KEY_MAIL, KEY_MEDIA, KEY_MENU, KEY_MICMUTE, KEY_MINUS, KEY_MOVE,\n"
+           "     KEY_MSDOS, KEY_MUHENKAN, KEY_MUTE, KEY_NEW, KEY_NEXTSONG, KEY_NUMLOCK, KEY_OPEN,\n"
+           "     KEY_PAGEDOWN, KEY_PAGEUP, KEY_PASTE, KEY_PAUSE, KEY_PAUSECD, KEY_PHONE, KEY_PLAY,\n"
+           "     KEY_PLAYCD, KEY_PLAYPAUSE, KEY_POWER, EY_PREVIOUSSONG, KEY_PRINT, KEY_PROPS, KEY_QUESTION,\n"
+           "     KEY_RECORD, KEY_REDO, KEY_REFRESH, KEY_REPLY, KEY_REWIND, KEY_RFKILL, KEY_RIGHT,\n"
+           "     KEY_RIGHTALT, KEY_RIGHTBRACE, KEY_RIGHTCTRL, KEY_RIGHTMETA, KEY_RIGHTSHIFT, KEY_RO,\n"
+           "     KEY_SAVE, KEY_SCALE, KEY_SCREENLOCK, KEY_SCROLLDOWN, KEY_SCROLLLOCK, KEY_SCROLLUP,\n"
+           "     KEY_SEARCH, KEY_SEMICOLON, KEY_SEND, KEY_SENDFILE, KEY_SETUP, KEY_SHOP, KEY_SLASH,\n"
+           "     KEY_SLEEP, KEY_SOUND, KEY_SPACE, KEY_SPORT, KEY_STOP, KEY_STOPCD, KEY_SUSPEND,\n"
+           "     KEY_SWITCHVIDEOMODE, KEY_SYSRQ, KEY_TAB, KEY_UNDO, KEY_UNKNOWN, KEY_UP, KEY_UWB,\n"
+           "     KEY_VIDEO_NEXT, KEY_VIDEO_PREV, KEY_VOLUMEDOWN, KEY_VOLUMEUP, KEY_WAKEUP, KEY_WIMAX,\n"
+           "     KEY_WLAN, KEY_WWW, KEY_XFER, KEY_YEN, KEY_ZENKAKUHANKAKU\n");
 }
 
 /* Print version information */
@@ -61,7 +117,7 @@ static void print_version(void)
 {
     printf("fkgpiod version "VERSION"\n");
     printf("FunKey S GPIO daemon\n\n");
-    printf("Copyright (C) 2021, Vincent Buso <vincent.buso@funkey-project.com>,\n");
+    printf("Copyright (C) 2020-2021, Vincent Buso <vincent.buso@funkey-project.com>,\n");
     printf("Copyright (C) 2021, Michel Stempin  <michel.stempin@funkey-project.com>,\n");
     printf("All rights reserved.\n");
     printf("Released under the GNU Lesser General Public License version 2.1 or later\n");
