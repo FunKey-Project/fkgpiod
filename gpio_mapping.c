@@ -25,10 +25,16 @@
  *  This file contains the GPIO mapping functions
  */
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+#include <sys/select.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "gpio_utils.h"
 #include "gpio_axp209.h"
 #include "gpio_mapping.h"
@@ -58,6 +64,8 @@
 #else
     #define LOG_ERROR(...)
 #endif
+
+#define FIFO_FILE               "/tmp/fkgpiod.fifo"
 
 /* These defines force to perform a GPIO sanity check after a timeout.
  * If not declared, there will be no timeout and no periodical sanity check of
@@ -90,11 +98,23 @@ static int fd_pcal6416a;
 /* AXP209 I2C PMIC pseudo-file descriptor */
 static int fd_axp209;
 
+/* FIFO pseudo-file descriptor */
+static int fd_fifo;
+
 /* Mask of monitored GPIOs */
 static uint32_t monitored_gpio_mask;
 
 /* Mask of current GPIOs */
 static uint32_t current_gpio_mask;
+
+/* Total bytes read from the FIFO */
+static size_t total_bytes = 0;
+
+/* Total bytes to write to the FIFO */
+static size_t bytes_to_write = 0;
+
+/* FIFO buffer */
+char fifo_buffer[256];
 
 /* Search for the GPIO mask into the mapping and apply the required actions */
 static void apply_mapping(mapping_list_t *list, uint32_t gpio_mask)
@@ -227,6 +247,26 @@ bool init_gpio_mapping(const char *config_filename,
     /* Initialize the GPIO interrupt for the AXP209 chip */
     LOG_DEBUG("Initialize interrupt for GPIO_PIN_AXP209_INTERRUPT\n");
     init_gpio_interrupt(GPIO_PIN_AXP209_INTERRUPT, &fd_axp209, "");
+
+    /* Create the FIFO pseudo-file if it does not exist */
+    LOG_DEBUG("Create the FIFO pseudo-file if it does not exist\n");
+    if (mkfifo(FIFO_FILE, O_RDWR | 0640) < 0 && errno != EEXIST) {
+        LOG_ERROR("Cannot create the \"%s\" FIFO: %s\n", FIFO_FILE,
+            strerror(errno));
+        return false;
+    }
+
+    /* Open the FIFO pseudo-file */
+    LOG_DEBUG("Open the FIFO pseudo-file\n");
+    fd_fifo = open(FIFO_FILE, O_RDWR | O_NONBLOCK);
+    if (fd_fifo < 0) {
+        LOG_ERROR("Cannot open the \"%s\" FIFO: %s\n", FIFO_FILE,
+            strerror(errno));
+        return false;
+    }
+
+    /* Clear buffer */
+    total_bytes = 0;
     return true;
 }
 
@@ -246,43 +286,58 @@ void deinit_gpio_mapping(void)
 
     /* Deinitialize the AXP209 PMIC chip */
     axp209_deinit();
+
+    /* Close the FIFO pseudo-file */
+    LOG_DEBUG("Close the FIFO pseudo-file \n");
+    close(fd_fifo);
 }
 
 /* Handle the GPIO mapping (with interrupts) */
 void handle_gpio_mapping(mapping_list_t *list)
 {
     int result, gpio, int_status, max_fd, fd, val_int_bank_3;
-    fd_set fds;
+    ssize_t read_bytes, bytes_written;
+    fd_set read_fds, write_fds, except_fds;
     uint32_t interrupt_mask, previous_gpio_mask;
     bool pcal6416a_interrupt = false;
     bool axp209_interrupt = false;
     bool forced_interrupt = false;
-    char buffer[2];
+    char buffer[2], *next_line;
     mapping_t *mapping;
 
     /* Initialize masks */
     previous_gpio_mask = current_gpio_mask;
     current_gpio_mask = 0;
 
-    /* Listen to interrupts */
-    FD_ZERO(&fds);
-    FD_SET(fd_pcal6416a, &fds);
-    FD_SET(fd_axp209, &fds);
+    /* Listen to FIFO read/write availability */
+    FD_ZERO(&read_fds);
+    FD_SET(fd_fifo, &read_fds);
+    FD_ZERO(&write_fds);
+    FD_SET(fd_fifo, &write_fds);
+
+    /* Listen to interrupt exceptions */
+    FD_ZERO(&except_fds);
+    FD_SET(fd_pcal6416a, &except_fds);
+    FD_SET(fd_axp209, &except_fds);
+
+    /* Compute the maximum file descriptor number */
     max_fd = (fd_pcal6416a > fd_axp209) ? fd_pcal6416a : fd_axp209;
+    max_fd = (fd_fifo > max_fd) ? fd_fifo : max_fd;
+
 #ifdef TIMEOUT_MICROSEC_SANITY_CHECK_GPIO_EXP
 
     /* Select with normal (short) timeout */
     struct timeval timeout = {0, TIMEOUT_MICROSEC_SANITY_CHECK_GPIO_EXP};
-    result = select(max_fd + 1, NULL, NULL, &fds, &timeout);
+    result = select(max_fd + 1, &read_fds, NULL, &except_fds, &timeout);
 #elif TIMEOUT_SEC_SANITY_CHECK_GPIO_EXP
 
     /* Select with debug (slow) timeout */
     struct timeval timeout = {TIMEOUT_SEC_SANITY_CHECK_GPIO_EXP, 0};
-    result = select(max_fd + 1, NULL, NULL, &fds, &timeout);
+    result = select(max_fd + 1, &read_fds, &write_fds, &except_fds, &timeout);
 #else
 
     /* Select with no timeout */
-    result = select(max_fd + 1, NULL, NULL, &fds, NULL);
+    result = select(max_fd + 1, &read_fds, &write_fds, &except_fds, NULL);
 #endif
     if (result == 0) {
 
@@ -298,9 +353,62 @@ void handle_gpio_mapping(mapping_list_t *list)
         return;
     } else {
 
+        /* Check if we received something from the FIFO */
+        if (FD_ISSET(fd_fifo, &read_fds)) {
+            while (true) {
+                read_bytes = read(fd_fifo, &fifo_buffer[total_bytes],
+                    sizeof (fifo_buffer) - 1);
+                if (read_bytes > 0) {
+                    total_bytes += (size_t) read_bytes;
+                } else if (errno == EWOULDBLOCK) {
+
+                    /* Done reading */
+                    LOG_DEBUG("Read %d bytes from FIFO: \"%.*s\"\n",
+                        (int) total_bytes, (int) total_bytes, fifo_buffer);
+                    if (strtok_r(fifo_buffer, "\r\n", &next_line) != NULL) {
+                        LOG_DEBUG("Parse line \"%s\"\n", fifo_buffer);
+                        if (parse_config_line(fifo_buffer, list,
+                            &monitored_gpio_mask) == false) {
+                            LOG_ERROR("Error while parsing line \"%s\"\n",
+                                fifo_buffer);
+                        }
+                        total_bytes -= next_line - fifo_buffer;
+                        if (total_bytes != 0) {
+                            memmove(fifo_buffer, next_line, total_bytes);
+                        }
+                    }
+                    break;
+                } else {
+                    LOG_ERROR("Cannot read from FIFO: %s\n", strerror(errno));
+                    return;
+                }
+            }
+        }
+
+        /* Check if we can write something to the FIFO */
+        if (FD_ISSET(fd_fifo, &write_fds)) {
+            while (bytes_to_write) {
+                bytes_written = write(fd_fifo, fifo_buffer, bytes_to_write);;
+                if (bytes_written > 0) {
+                    bytes_to_write -= bytes_written;
+                    LOG_DEBUG("Wrote %d bytes to FIFO: \"%.*s\"\n",
+                        (int) bytes_written, (int) bytes_written, fifo_buffer);
+                } else if (errno == EWOULDBLOCK) {
+
+                    /* FIFO is full */
+                    LOG_DEBUG("FIFO is full, %d bytes left to write\n",
+                        (int) bytes_to_write);
+                    break;
+                } else {
+                    LOG_ERROR("Cannot write to FIFO: %s\n", strerror(errno));
+                    return;
+                }
+            }
+        }
+
         /* Check which file descriptor is available for read */
         for (fd = 0; fd <= max_fd; fd++) {
-            if (FD_ISSET(fd, &fds)) {
+            if (FD_ISSET(fd, &except_fds)) {
 
                 /* Rewind file and dummy read the current GPIO value */
                 lseek(fd, 0, SEEK_SET);
