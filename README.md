@@ -19,6 +19,11 @@ Options:
  -k, -K, --kill                                     Kill background daemon
  -v, --version                                      Print version information
 ```
+You can send script commands to the fkgpiod daemon by writting to the `/tmp/fkgpiod.fifo` file:
+
+```
+$ echo "LOAD /etc/fkgpiod.conf" > /tmp/fkgpiod.fifo
+```
 
 ## Available script commands (commands are not case sensitive):
 
