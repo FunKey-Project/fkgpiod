@@ -20,15 +20,15 @@ Options:
 
 ```
 DUMP                                                Dump the button mapping
-KEYDOWN <keycode>                                   Send a key down event with the given keycode
-KEYPRESS <keycode>                                  Send key press event with the given keycode
-KEYUP <keycode>                                     Send a key up event with the given keycode
+KEYDOWN <key_code>                                  Send a key down event with the given keycode
+KEYPRESS <key_code>                                 Send key press event with the given keycode
+KEYUP <key_code>                                    Send a key up event with the given keycode
 LOAD <configuration_file>                           Load a configuration file
-MAP <button_combination> TO KEY <keycode>           Map a button combination to a keycode
+MAP <button_combination> TO KEY <key_code>          Map a button combination to a keycode
 MAP <button_combination> TO COMMAND <shell_command> Map a button combination to a Shell command
 RESET                                               Reset the button mapping
 SLEEP <delays_ms>                                   Sleep for the given delay in ms
-TYPE <string>                                       Type in a string
+TYPE <character_string>                             Type in a character string
 UNMAP <button_combination>                          Unmap a button combination
 ```
 
@@ -38,8 +38,8 @@ where:
  - <shell_command> is any valid Shell command with its arguments
  - <configuration_file> is the full path to a configurtion file
  - <delay_ms> is a delay in ms
- - <string> is a character string
- - <keycode> is among:
+ - <character_string> is a character string
+ - <key_code> is among:
    - KEY_0 to KEY_9, KEY_A to KEY_Z
    - KEY_F1 to KEY_F24, KEY_KP0 to KEY_KP9, KEY_PROG1 to KEY_PROG4
    - BTN_0 to BTN_9, BTN_A to BTN_C, BTN_X to BTN_Z, BTN_BASE2 to BTN_BASE6
