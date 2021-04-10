@@ -31,7 +31,6 @@
 #include <string.h>
 #include <syslog.h>
 #include <getopt.h>
-#include "to_log.h"
 #include "daemon.h"
 #include "uinput.h"
 #include "gpio_mapping.h"
