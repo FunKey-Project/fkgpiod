@@ -25,35 +25,29 @@
  *  This is userland GPIO driver for the PCAL6416AHB I2C GPIO expander chip
  */
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <fcntl.h>
-#include <errno.h>
-#include <sys/select.h>
+#include <stdio.h>
+#include <syslog.h>
+#include <unistd.h>
 #include <linux/input.h>
-#include <assert.h>
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
-#include "smbus.h"
 #include "gpio_pcal6416a.h"
+#include "smbus.h"
 
 //#define DEBUG_PCAL6416A
 #define ERROR_PCAL6416A
 
 #ifdef DEBUG_PCAL6416A
-        #define LOG_DEBUG(...) printf(__VA_ARGS__);
+    #define FK_DEBUG(...) syslog(LOG_DEBUG, __VA_ARGS__);
 #else
-        #define LOG_DEBUG(...)
+        #define FK_DEBUG(...)
 #endif
 
 #ifdef ERROR_PCAL6416A
-    #define LOG_ERROR(...) fprintf(stderr, "ERR: " __VA_ARGS__);
+    #define FK_ERROR(...) syslog(LOG_ERR, __VA_ARGS__);
 #else
-    #define LOG_ERROR(...)
+    #define FK_ERROR(...)
 #endif
 
 /* Structure to map I2C address and I2C GPIO expander name */
@@ -85,7 +79,7 @@ bool pcal6416a_init(void)
 
     /* Open the I2C bus pseudo-file */
     if ((fd_i2c_expander = open(i2c0_sysfs_filename,O_RDWR)) < 0) {
-        LOG_ERROR("Failed to open the I2C bus %s", i2c0_sysfs_filename);
+        FK_ERROR("Failed to open the I2C bus %s", i2c0_sysfs_filename);
         return false;
     }
 
@@ -94,10 +88,10 @@ bool pcal6416a_init(void)
 
         if (ioctl(fd_i2c_expander, I2C_SLAVE_FORCE, i2c_chip[i]) < 0 ||
             pcal6416a_read_mask_interrupts() < 0) {
-            LOG_DEBUG("Failed to acquire bus access and/or talk to slave %s at address 0x%02X.\n",
+            FK_DEBUG("Failed to acquire bus access and/or talk to slave %s at address 0x%02X.\n",
                 i2c_chip[i].name, i2c_chip[i].address);
         } else {
-            LOG_DEBUG("Found I2C gpio expander chip %s at address 0x%02X\n",
+            FK_DEBUG("Found I2C gpio expander chip %s at address 0x%02X\n",
                 i2c_chip[i].name, i2c_chip[i].address);
             i2c_expander_addr = i2c_chip[i].address;
             break;
@@ -106,7 +100,7 @@ bool pcal6416a_init(void)
 
     /* GPIO expander chip found? */
     if (!i2c_expander_addr) {
-        LOG_ERROR("Failed to acquire bus access and/or talk to slave, exit\n");
+        FK_ERROR("Failed to acquire bus access and/or talk to slave, exit\n");
         return false;
     }
     i2c_smbus_write_word_data ( fd_i2c_expander, PCAL6416A_CONFIG, 0xffff);
@@ -137,7 +131,7 @@ int pcal6416a_read_mask_interrupts(void)
         return val_int;
     }
     val = val_int & 0xFFFF;
-    LOG_DEBUG("READ PCAL6416A_INT_STATUS :  0x%04X\n", val);
+    FK_DEBUG("READ PCAL6416A_INT_STATUS :  0x%04X\n", val);
     return (int) val;
 }
 
@@ -153,6 +147,6 @@ int pcal6416a_read_mask_active_GPIOs(void)
     }
     val = val_int & 0xFFFF;
     val = 0xFFFF - val;
-    LOG_DEBUG("READ PCAL6416A_INPUT (active GPIOs) :  0x%04X\n", val);
+    FK_DEBUG("READ PCAL6416A_INPUT (active GPIOs) :  0x%04X\n", val);
     return (int) val;
 }

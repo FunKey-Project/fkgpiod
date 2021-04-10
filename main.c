@@ -215,10 +215,11 @@ int main(int argc, char *argv[])
     if (daemon) {
 
         /* Run as a background daemon, redirect all output to syslog */
+//        to_log(&stdout);
+//        to_log(&stderr);
+        daemonize("fkgpiod", "/", PID_FILE);
+    } else {
         openlog("fkgpiod", LOG_PERROR | LOG_PID | LOG_NDELAY, LOG_DAEMON);
-        to_log(&stdout);
-        to_log(&stderr);
-        daemonize("/", PID_FILE);
     }
 
     /* Initialize the uinput device */

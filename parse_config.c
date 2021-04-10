@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <syslog.h>
 #include "keydefs.h"
 #include "mapping_list.h"
 #include "parse_config.h"
@@ -40,15 +41,15 @@
 #define ERROR_CONFIG
 
 #ifdef DEBUG_CONFIG
-    #define LOG_DEBUG(...) printf(__VA_ARGS__);
+    #define FK_DEBUG(...) syslog(LOG_DEBUG, __VA_ARGS__);
 #else
-    #define LOG_DEBUG(...)
+    #define FK_DEBUG(...)
 #endif
 
 #ifdef ERROR_CONFIG
-    #define LOG_ERROR(...) fprintf(stderr, "ERR: " __VA_ARGS__);
+    #define FK_ERROR(...) syslog(LOG_ERR, __VA_ARGS__);
 #else
-    #define LOG_ERROR(...)
+    #define FK_ERROR(...)
 #endif
 
 #define MAX_BUFFER_LENGTH 256
@@ -111,7 +112,7 @@ static parse_state_t lookup_command(char *token)
             return keyword;
         }
     }
-    LOG_ERROR("Invalid keyword \"%s\"\n", token);
+    FK_ERROR("Invalid keyword \"%s\"\n", token);
     return STATE_INVALID;
 }
 
@@ -126,7 +127,7 @@ static parse_state_t lookup_function(char *token)
             return valid_functions[command].state;
         }
     }
-    LOG_ERROR("Invalid keyword \"%s\"\n", token);
+    FK_ERROR("Invalid keyword \"%s\"\n", token);
     return STATE_INVALID;
 }
 
@@ -137,12 +138,12 @@ static int lookup_gpio(char *token)
 
     for (button = 0; gpio_names[button] != NULL; button++) {
         if (strcasecmp(token, gpio_names[button]) == 0) {
-            LOG_DEBUG("Found button \"%s\" (GPIO %d)\n", gpio_names[button],
+            FK_DEBUG("Found button \"%s\" (GPIO %d)\n", gpio_names[button],
                 button);
             return button;
         }
     }
-    LOG_ERROR("Unknown button \"%s\"\n", token);
+    FK_ERROR("Unknown button \"%s\"\n", token);
     return -1;
 }
 
@@ -153,12 +154,12 @@ static int lookup_key(char *token)
 
     for (key = 0; key_names[key].code >= 0; key++) {
         if (strcasecmp(token, key_names[key].name) == 0) {
-            LOG_DEBUG("Found keycode \"%s\" (%d)\n", key_names[key].name,
+            FK_DEBUG("Found keycode \"%s\" (%d)\n", key_names[key].name,
                 key_names[key].code);
             return key;
         }
     }
-    LOG_ERROR("Unknown key \"%s\"\n", token);
+    FK_ERROR("Unknown key \"%s\"\n", token);
     return -1;
 }
 
@@ -210,18 +211,18 @@ bool parse_config_line(char *line, mapping_list_t *list,
         case STATE_MAP:
             if (strcasecmp(token, "TO") == 0) {
                 if (state != STATE_MAP) {
-                    LOG_ERROR("Unexpected keyword \"TO\"\n");
+                    FK_ERROR("Unexpected keyword \"TO\"\n");
                     return false;
                 }
                 if (expecting_button == true) {
 
                     /* Missing last button */
-                    LOG_ERROR("Missing last button\n");
+                    FK_ERROR("Missing last button\n");
                     return false;
                 } else if (button_count == 0) {
 
                     /* No button found */
-                    LOG_ERROR("No button found\n");
+                    FK_ERROR("No button found\n");
                     return false;
                 }
                 state = STATE_FUNCTION;
@@ -236,12 +237,12 @@ bool parse_config_line(char *line, mapping_list_t *list,
                         if (button_count == 0) {
 
                             /* We need at least one button left of '+' */
-                            LOG_ERROR("Missing first button\n");
+                            FK_ERROR("Missing first button\n");
                             return false;
                         } else if (expecting_button == true) {
 
                             /* Exepecting a button, cannot have another '+' */
-                            LOG_ERROR("Missing button\n");
+                            FK_ERROR("Missing button\n");
                             return false;
                         } else {
 
@@ -281,7 +282,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
         case STATE_SLEEP:
             for (s = token; *s; s++) {
                 if (!isdigit(*s)) {
-                    LOG_ERROR("Invalid delay \"%s\"\n", token);
+                    FK_ERROR("Invalid delay \"%s\"\n", token);
                     return false;
                 }
             }
@@ -322,7 +323,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
             break;
 
         default:
-            LOG_ERROR("Unknown state %d\n", state);
+            FK_ERROR("Unknown state %d\n", state);
             return false;
         }
         if (!skip_read_token){
@@ -332,16 +333,16 @@ bool parse_config_line(char *line, mapping_list_t *list,
     }
     switch (state) {
     case STATE_UNMAP:
-        LOG_DEBUG("UNMAP gpio_mask 0x%04X button_count %d\n", gpio_mask,
+        FK_DEBUG("UNMAP gpio_mask 0x%04X button_count %d\n", gpio_mask,
             button_count);
         existing_mapping = find_mapping(list, gpio_mask);
         if (existing_mapping == NULL) {
-            LOG_ERROR("Cannot find mapping with gpio_mask 0x%04X\n",
+            FK_ERROR("Cannot find mapping with gpio_mask 0x%04X\n",
                 gpio_mask);
             return false;
         }
         if (remove_mapping(list, existing_mapping) == false) {
-            LOG_ERROR("Cannot remove mapping with gpio_mask 0x%04X\n",
+            FK_ERROR("Cannot remove mapping with gpio_mask 0x%04X\n",
                 gpio_mask);
             return false;
         }
@@ -349,22 +350,22 @@ bool parse_config_line(char *line, mapping_list_t *list,
         break;
 
     case STATE_CLEAR:
-        LOG_DEBUG("CLEAR\n");
+        FK_DEBUG("CLEAR\n");
         clear_mapping_list(list);
         break;
 
     case STATE_LOAD:
-        LOG_DEBUG("LOAD file \"%s\"\n", buffer);
+        FK_DEBUG("LOAD file \"%s\"\n", buffer);
         return parse_config_file(buffer, list, monitored_gpio_mask);
         break;
 
     case STATE_SLEEP:
-        LOG_DEBUG("SLEEP delay %s ms\n", buffer);
+        FK_DEBUG("SLEEP delay %s ms\n", buffer);
         usleep(atoi(buffer) * 1000);
         break;
 
     case STATE_TYPE:
-        LOG_DEBUG("TYPE \"%s\"\n", buffer);
+        FK_DEBUG("TYPE \"%s\"\n", buffer);
         break;
 
     case STATE_KEY:
@@ -384,14 +385,14 @@ bool parse_config_line(char *line, mapping_list_t *list,
             break;
 
         case STATE_MAP:
-            LOG_DEBUG("MAP gpio_mask 0x%04X to key %d, button_count %d\n",
+            FK_DEBUG("MAP gpio_mask 0x%04X to key %d, button_count %d\n",
                 gpio_mask, key, button_count);
             existing_mapping = find_mapping(list, gpio_mask);
             if (existing_mapping != NULL) {
-                LOG_DEBUG("Existing mapping with gpio_mask 0x%04X found\n",
+                FK_DEBUG("Existing mapping with gpio_mask 0x%04X found\n",
                     gpio_mask);
                 if (remove_mapping(list, existing_mapping) == false) {
-                    LOG_ERROR("Cannot remove mapping with gpio_mask 0x%04X\n",
+                    FK_ERROR("Cannot remove mapping with gpio_mask 0x%04X\n",
                         gpio_mask);
                     return false;
                 }
@@ -402,7 +403,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
             new_mapping.type = MAPPING_KEY;
             new_mapping.value.keycode = key;
             if (insert_mapping(list, &new_mapping) == false) {
-                LOG_ERROR("Cannot add mapping with gpio_mask 0x%04X\n",
+                FK_ERROR("Cannot add mapping with gpio_mask 0x%04X\n",
                     gpio_mask);
                 return false;
             }
@@ -410,22 +411,22 @@ bool parse_config_line(char *line, mapping_list_t *list,
             break;
 
         default:
-            LOG_ERROR("Invalid keyword %d\n", keyword);
+            FK_ERROR("Invalid keyword %d\n", keyword);
             return false;
         }
         break;
 
     case STATE_COMMAND:
-        LOG_DEBUG("MAP gpio_mask 0x%04X to command \"%s\", button_count %d\n",
+        FK_DEBUG("MAP gpio_mask 0x%04X to command \"%s\", button_count %d\n",
             gpio_mask, buffer, button_count);
-        LOG_DEBUG("MAP gpio_mask 0x%04X to key %d, button_count %d\n",
+        FK_DEBUG("MAP gpio_mask 0x%04X to key %d, button_count %d\n",
             gpio_mask, key, button_count);
         existing_mapping = find_mapping(list, gpio_mask);
         if (existing_mapping != NULL) {
-            LOG_DEBUG("Existing mapping with gpio_mask 0x%04X found\n",
+            FK_DEBUG("Existing mapping with gpio_mask 0x%04X found\n",
                 gpio_mask);
             if (remove_mapping(list, existing_mapping) == false) {
-                LOG_ERROR("Cannot remove mapping with gpio_mask 0x%04X\n",
+                FK_ERROR("Cannot remove mapping with gpio_mask 0x%04X\n",
                     gpio_mask);
                 return false;
             }
@@ -436,7 +437,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
         new_mapping.type = MAPPING_COMMAND;
         new_mapping.value.command = buffer;
         if (insert_mapping(list, &new_mapping) == false) {
-            LOG_ERROR("Cannot add mapping with gpio_mask 0x%04X\n",
+            FK_ERROR("Cannot add mapping with gpio_mask 0x%04X\n",
                 gpio_mask);
             return false;
         }
@@ -450,7 +451,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
        break;
 
     default:
-        LOG_ERROR("Unknown result state %d\n", state);
+        FK_ERROR("Unknown result state %d\n", state);
         return false;
     }
     return true;
@@ -464,13 +465,13 @@ bool parse_config_file(const char *name, mapping_list_t *list,
     int line_number = 0;
 
     if ((fp = fopen(name, "r")) == NULL) {
-        LOG_ERROR("Cannot open file \"%s\"\n", name);
+        FK_ERROR("Cannot open file \"%s\"\n", name);
         return false;
     }
     while (!feof(fp)) {
         if (fgets(line, MAX_LINE_LENGTH, fp) != line) {
             if (!feof(fp)) {
-                LOG_ERROR("Error reading file \"%s\": %s\n", name,
+                FK_ERROR("Error reading file \"%s\": %s\n", name,
                     strerror(errno));
                 fclose(fp);
                 return false;
@@ -488,7 +489,7 @@ bool parse_config_file(const char *name, mapping_list_t *list,
 
         /* Parse a configuration line */
         if (parse_config_line(line, list, monitored_gpio_mask) == false) {
-            LOG_ERROR("line %d\n", line_number);
+            FK_ERROR("line %d\n", line_number);
             break;
         }
     }

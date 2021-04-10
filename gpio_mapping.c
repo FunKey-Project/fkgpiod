@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <syslog.h>
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -48,21 +49,21 @@
 #define ERROR_GPIO
 
 #ifdef DEBUG_GPIO
-    #define LOG_DEBUG(...) printf(__VA_ARGS__);
+    #define FK_DEBUG(...) syslog(LOG_DEBUG, __VA_ARGS__);
 #else
-    #define LOG_DEBUG(...)
+    #define FK_DEBUG(...)
 #endif
 
 #ifdef DEBUG_PERIODIC_CHECK
-    #define LOG_PERIODIC(...) printf(__VA_ARGS__);
+    #define FK_PERIODIC(...) syslog(LOG_DEBUG, __VA_ARGS__);
 #else
-    #define LOG_PERIODIC(...)
+    #define FK_PERIODIC(...)
 #endif
 
 #ifdef ERROR_GPIO
-    #define LOG_ERROR(...) fprintf(stderr, "ERR: " __VA_ARGS__);
+    #define FK_ERROR(...) syslog(LOG_ERR, __VA_ARGS__);
 #else
-    #define LOG_ERROR(...)
+    #define FK_ERROR(...)
 #endif
 
 #define FIFO_FILE               "/tmp/fkgpiod.fifo"
@@ -128,7 +129,7 @@ static void apply_mapping(mapping_list_t *list, uint32_t gpio_mask)
         if ((mapping->gpio_mask & gpio_mask) == mapping->gpio_mask)  {
 
             /* If the current GPIO mask contains the mapping GPIO mask */
-            LOG_DEBUG("Found matching mapping:\n");
+            FK_DEBUG("Found matching mapping:\n");
 #ifdef DEBUG_GPIO
             dump_mapping(mapping);
 #endif // DEBUG_GPIO
@@ -139,12 +140,12 @@ static void apply_mapping(mapping_list_t *list, uint32_t gpio_mask)
                 if (mapping->type == MAPPING_KEY) {
 
                     /* Send the key down event */
-                    LOG_DEBUG("\t--> Key press %d\n", mapping->value.keycode);
+                    FK_DEBUG("\t--> Key press %d\n", mapping->value.keycode);
                     sendKey(mapping->value.keycode, 1);
                 } else if (mapping->type == MAPPING_COMMAND) {
 
                     /* Execute the corresponding Shell command */
-                    LOG_DEBUG("\t--> Execute Shell command \"%s\"\n",
+                    FK_DEBUG("\t--> Execute Shell command \"%s\"\n",
                     mapping->value.command);
                     system(mapping->value.command);
                 }
@@ -157,7 +158,7 @@ static void apply_mapping(mapping_list_t *list, uint32_t gpio_mask)
         } else if (mapping->activated) {
 
             /* Non-matching activated mapping, deactivate it */
-            LOG_DEBUG("Found activated mapping:\n");
+            FK_DEBUG("Found activated mapping:\n");
 #ifdef DEBUG_GPIO
             dump_mapping(mapping);
 #endif // DEBUG_GPIO
@@ -165,7 +166,7 @@ static void apply_mapping(mapping_list_t *list, uint32_t gpio_mask)
             if (mapping->type == MAPPING_KEY) {
 
                 /* Send the key up event */
-                LOG_DEBUG("\t--> Key release %d\n", mapping->value.keycode);
+                FK_DEBUG("\t--> Key release %d\n", mapping->value.keycode);
                 sendKey(mapping->value.keycode, 0);
             }
         }
@@ -175,7 +176,7 @@ static void apply_mapping(mapping_list_t *list, uint32_t gpio_mask)
 /* Initialize the GPIO interrupt for the I2C expander chip */
 static bool init_gpio_interrupt(int gpio, int *fd, const char *edge)
 {
-    LOG_DEBUG("Initializing interrupt for GPIO P%c%d (%d)\n",
+    FK_DEBUG("Initializing interrupt for GPIO P%c%d (%d)\n",
         (gpio / 16) + '@', gpio % 16, gpio);
     if (gpio_export(gpio) < 0) {
         return false;
@@ -190,7 +191,7 @@ static bool init_gpio_interrupt(int gpio, int *fd, const char *edge)
 
     /* Open the GPIO pseudo-file */
     *fd = gpio_fd_open(gpio, O_RDONLY);
-    LOG_DEBUG("GPIO fd is: %d\n", *fd);
+    FK_DEBUG("GPIO fd is: %d\n", *fd);
     if (*fd < 0) {
         return false;
     }
@@ -200,7 +201,7 @@ static bool init_gpio_interrupt(int gpio, int *fd, const char *edge)
 /* Deinitialize the GPIO interrupt for the I2C expander chip */
 static void deinit_gpio_interrupt(int fd)
 {
-    LOG_DEBUG("DeInitializing interrupt for GPIO fd %d\n", fd);
+    FK_DEBUG("DeInitializing interrupt for GPIO fd %d\n", fd);
 
     /* Close the GPIO pseudo-file */
     gpio_fd_close(fd);
@@ -234,7 +235,7 @@ bool init_gpio_mapping(const char *config_filename,
     }
 
     /* Initialize the GPIO interrupt for the I2C GPIO expander chip */
-    LOG_DEBUG("Initialize interrupt for GPIO_PIN_I2C_EXPANDER_INTERRUPT\n");
+    FK_DEBUG("Initialize interrupt for GPIO_PIN_I2C_EXPANDER_INTERRUPT\n");
     init_gpio_interrupt(GPIO_PIN_I2C_EXPANDER_INTERRUPT, &fd_pcal6416a,
         "both");
 
@@ -244,22 +245,22 @@ bool init_gpio_mapping(const char *config_filename,
     }
 
     /* Initialize the GPIO interrupt for the AXP209 chip */
-    LOG_DEBUG("Initialize interrupt for GPIO_PIN_AXP209_INTERRUPT\n");
+    FK_DEBUG("Initialize interrupt for GPIO_PIN_AXP209_INTERRUPT\n");
     init_gpio_interrupt(GPIO_PIN_AXP209_INTERRUPT, &fd_axp209, "");
 
     /* Create the FIFO pseudo-file if it does not exist */
-    LOG_DEBUG("Create the FIFO pseudo-file if it does not exist\n");
+    FK_DEBUG("Create the FIFO pseudo-file if it does not exist\n");
     if (mkfifo(FIFO_FILE, O_RDWR | 0640) < 0 && errno != EEXIST) {
-        LOG_ERROR("Cannot create the \"%s\" FIFO: %s\n", FIFO_FILE,
+        FK_ERROR("Cannot create the \"%s\" FIFO: %s\n", FIFO_FILE,
             strerror(errno));
         return false;
     }
 
     /* Open the FIFO pseudo-file */
-    LOG_DEBUG("Open the FIFO pseudo-file\n");
+    FK_DEBUG("Open the FIFO pseudo-file\n");
     fd_fifo = open(FIFO_FILE, O_RDWR | O_NONBLOCK);
     if (fd_fifo < 0) {
-        LOG_ERROR("Cannot open the \"%s\" FIFO: %s\n", FIFO_FILE,
+        FK_ERROR("Cannot open the \"%s\" FIFO: %s\n", FIFO_FILE,
             strerror(errno));
         return false;
     }
@@ -273,21 +274,21 @@ bool init_gpio_mapping(const char *config_filename,
 void deinit_gpio_mapping(void)
 {
     /* Deinitialize the GPIO interrupt for the I2C GPIO expander chip */
-    LOG_DEBUG("DeInitiating interrupt for GPIO_PIN_I2C_EXPANDER_INTERRUPT\n");
+    FK_DEBUG("DeInitiating interrupt for GPIO_PIN_I2C_EXPANDER_INTERRUPT\n");
     deinit_gpio_interrupt(fd_pcal6416a);
 
     /* Deinitialize the I2C GPIO expander chip */
     pcal6416a_deinit();
 
     /* Deinitialize the GPIO interrupt for the AXP209 PMIC chip */
-    LOG_DEBUG("DeInitiating interrupt for GPIO_PIN_AXP209_INTERRUPT\n");
+    FK_DEBUG("DeInitiating interrupt for GPIO_PIN_AXP209_INTERRUPT\n");
     deinit_gpio_interrupt(fd_axp209);
 
     /* Deinitialize the AXP209 PMIC chip */
     axp209_deinit();
 
     /* Close the FIFO pseudo-file */
-    LOG_DEBUG("Close the FIFO pseudo-file \n");
+    FK_DEBUG("Close the FIFO pseudo-file \n");
     close(fd_fifo);
 }
 
@@ -339,14 +340,14 @@ void handle_gpio_mapping(mapping_list_t *list)
     if (result == 0) {
 
         /* Timeout case */
-        LOG_PERIODIC("Timeout, forcing sanity check\n");
+        FK_PERIODIC("Timeout, forcing sanity check\n");
 
         /* Timeout forces a "Found interrupt" event for sanity check */
         pcal6416a_interrupt = axp209_interrupt = forced_interrupt = true;
     } else if (result < 0) {
 
         /* Error case  */
-        perror("select");
+        FK_ERROR("select: %s\n", strerror(errno));
         return;
     } else {
 
@@ -360,13 +361,13 @@ void handle_gpio_mapping(mapping_list_t *list)
                 } else if (errno == EWOULDBLOCK) {
 
                     /* Done reading */
-                    LOG_DEBUG("Read %d bytes from FIFO: \"%.*s\"\n",
+                    FK_DEBUG("Read %d bytes from FIFO: \"%.*s\"\n",
                         (int) total_bytes, (int) total_bytes, fifo_buffer);
                     if (strtok_r(fifo_buffer, "\r\n", &next_line) != NULL) {
-                        LOG_DEBUG("Parse line \"%s\"\n", fifo_buffer);
+                        FK_DEBUG("Parse line \"%s\"\n", fifo_buffer);
                         if (parse_config_line(fifo_buffer, list,
                             &monitored_gpio_mask) == false) {
-                            LOG_ERROR("Error while parsing line \"%s\"\n",
+                            FK_ERROR("Error while parsing line \"%s\"\n",
                                 fifo_buffer);
                         }
                         total_bytes -= next_line - fifo_buffer;
@@ -376,7 +377,7 @@ void handle_gpio_mapping(mapping_list_t *list)
                     }
                     break;
                 } else {
-                    LOG_ERROR("Cannot read from FIFO: %s\n", strerror(errno));
+                    FK_ERROR("Cannot read from FIFO: %s\n", strerror(errno));
                     return;
                 }
             }
@@ -389,16 +390,16 @@ void handle_gpio_mapping(mapping_list_t *list)
                 /* Rewind file and dummy read the current GPIO value */
                 lseek(fd, 0, SEEK_SET);
                 if (read(fd, &buffer, 2) != 2) {
-                    perror("read");
+		    FK_ERROR("read: %s\n", strerror(errno));
                     break;
                 }
 
                 /* Check if the interrupt is from I2C GPIO expander or AXP209 */
                 if (fd == fd_pcal6416a) {
-                    LOG_DEBUG("Found interrupt generated by PCAL6416AHF\r\n");
+                    FK_DEBUG("Found interrupt generated by PCAL6416AHF\r\n");
                     pcal6416a_interrupt = true;
                 } else if (fd == fd_axp209) {
-                    LOG_DEBUG("Found interrupt generated by AXP209\r\n");
+                    FK_DEBUG("Found interrupt generated by AXP209\r\n");
                     axp209_interrupt = true;
                 }
             }
@@ -408,33 +409,33 @@ void handle_gpio_mapping(mapping_list_t *list)
     /* Process the AXP209 interrupts, if any */
     if (axp209_interrupt) {
         if (forced_interrupt) {
-            LOG_PERIODIC("Processing forced AXP209 interrupt\n");
+            FK_PERIODIC("Processing forced AXP209 interrupt\n");
         } else {
-            LOG_DEBUG("Processing real AXP209 interrupt\n");
+            FK_DEBUG("Processing real AXP209 interrupt\n");
         }
         val_int_bank_3 = axp209_read_interrupt_bank_3();
         if (val_int_bank_3 < 0) {
-            LOG_DEBUG("Could not read AXP209 by I2C\n");
+            FK_DEBUG("Could not read AXP209 by I2C\n");
             return;
         }
 
         /* Proccess the Power Enable Key (PEK) short keypress */
         if (val_int_bank_3 & AXP209_INTERRUPT_PEK_SHORT_PRESS) {
-            LOG_DEBUG("AXP209 short PEK key press detected\n");
+            FK_DEBUG("AXP209 short PEK key press detected\n");
             mapping = find_mapping(list, SHORT_PEK_PRESS_GPIO_MASK);
             if (mapping != NULL) {
-                LOG_DEBUG("Found matching mapping:\n");
+                FK_DEBUG("Found matching mapping:\n");
 #ifdef DEBUG_GPIO
                 dump_mapping(mapping);
 #endif // DEBUG_GPIO
                 if (mapping->type == MAPPING_KEY) {
-                    LOG_DEBUG("\t--> Key press and release %d\n",
+                    FK_DEBUG("\t--> Key press and release %d\n",
                         mapping->value.keycode);
                     sendKey(mapping->value.keycode, 1);
                     usleep(SHORT_PEK_PRESS_DURATION_US);
                     sendKey(mapping->value.keycode, 0);
                 } else if (mapping->type == MAPPING_COMMAND) {
-                    LOG_DEBUG("\t--> Execute Shell command \"%s\"\n",
+                    FK_DEBUG("\t--> Execute Shell command \"%s\"\n",
                         mapping->value.command);
                     system(mapping->value.command);
                 }
@@ -445,8 +446,8 @@ void handle_gpio_mapping(mapping_list_t *list)
          * will shutdown the system in 3s anyway
          */
         if (val_int_bank_3 & AXP209_INTERRUPT_PEK_LONG_PRESS) {
-            LOG_DEBUG("AXP209 long PEK key press detected\n");
-            LOG_DEBUG("\t--> Execute Shell command \"%s\"\n",
+            FK_DEBUG("AXP209 long PEK key press detected\n");
+            FK_DEBUG("\t--> Execute Shell command \"%s\"\n",
                 SHELL_COMMAND_SHUTDOWN);
             system(SHELL_COMMAND_SHUTDOWN);
         }
@@ -455,15 +456,15 @@ void handle_gpio_mapping(mapping_list_t *list)
     /* Process the PCAL6416A interrupts, if any */
     if (pcal6416a_interrupt) {
         if (forced_interrupt) {
-            LOG_PERIODIC("Processing forced PCAL6416AHF interrupt\n");
+            FK_PERIODIC("Processing forced PCAL6416AHF interrupt\n");
         } else {
-            LOG_DEBUG("Processing real PCAL6416AHF interrupt\n");
+            FK_DEBUG("Processing real PCAL6416AHF interrupt\n");
         }
 
         /* Read the interrupt mask */
         int_status = pcal6416a_read_mask_interrupts();
         if (int_status < 0) {
-            LOG_DEBUG("Could not read PCAL6416A interrupt status by I2C\n");
+            FK_DEBUG("Could not read PCAL6416A interrupt status by I2C\n");
             return;
         }
         interrupt_mask = (uint32_t) int_status;
@@ -471,7 +472,7 @@ void handle_gpio_mapping(mapping_list_t *list)
         /* Read the GPIO mask */
         current_gpio_mask = pcal6416a_read_mask_active_GPIOs();
         if (current_gpio_mask < 0) {
-            LOG_DEBUG("Could not read PCAL6416A active GPIOS by I2C\n");
+            FK_DEBUG("Could not read PCAL6416A active GPIOS by I2C\n");
             return;
         }
 
@@ -489,13 +490,13 @@ void handle_gpio_mapping(mapping_list_t *list)
             if (interrupt_mask & (1 << gpio)) {
 
                 /* Found the GPIO in the interrupt mask */
-                LOG_DEBUG("\t--> Interrupt GPIO: %d\n", gpio);
+                FK_DEBUG("\t--> Interrupt GPIO: %d\n", gpio);
             } else if ((current_gpio_mask ^ previous_gpio_mask) & (1 << gpio)) {
 
                 /* The GPIO is not in the interrupt mask, but has changed, force
                 * it
                 */
-                LOG_DEBUG("\t--> No interrupt (missed) but value has changed on GPIO: %d\n",
+                FK_DEBUG("\t--> No interrupt (missed) but value has changed on GPIO: %d\n",
                 gpio);
                 interrupt_mask |= 1 << gpio;
             }
@@ -505,15 +506,15 @@ void handle_gpio_mapping(mapping_list_t *list)
             /* No change */
             return;
         }
-        LOG_DEBUG("current_gpio_mask 0x%04X interrupt_mask 0x%04X\n",
+        FK_DEBUG("current_gpio_mask 0x%04X interrupt_mask 0x%04X\n",
             current_gpio_mask, int_status);
 
         /* Proccess the N_OE signal from the magnetic Reed switch, the
          * AXP209 will shutdown the system in 3s anyway
          */
         if (interrupt_mask & NOE_GPIO_MASK) {
-            LOG_DEBUG("NOE detected\n");
-            LOG_DEBUG("\t--> Execute Shell command \"%s\"\n",
+            FK_DEBUG("NOE detected\n");
+            FK_DEBUG("\t--> Execute Shell command \"%s\"\n",
                 SHELL_COMMAND_SHUTDOWN);
             interrupt_mask &= ~NOE_GPIO_MASK;
             system(SHELL_COMMAND_SHUTDOWN);

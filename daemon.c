@@ -88,7 +88,7 @@ void kill_daemon(char *pidfile)
 }
 
 /* Turn the running process into a daemon */
-void daemonize(char *rundir, char *pidfile)
+void daemonize(const char *ident, char *rundir, char *pidfile)
 {
     int pid, i;
     char str[10];
@@ -163,6 +163,9 @@ void daemonize(char *rundir, char *pidfile)
         close(i);
     }
 
+    /* Since we have no more stdout/stderr, open syslog */
+    openlog(ident, LOG_PID | LOG_NDELAY, LOG_DAEMON);
+
     /* Make sure there is only one daemon running at a time using a lock file */
     pid_lock_file = pidfile;
     pid_fd = open(pidfile, O_RDWR | O_CREAT, 0600);
@@ -177,7 +180,10 @@ void daemonize(char *rundir, char *pidfile)
     }
     sprintf(str, "%d\n", getpid());
     if (write(pid_fd, str, strlen(str)) < 0) {
-        perror(pidfile);
+        syslog(LOG_ERR, "Could not write to lock file %s: %s. Exiting.",
+            strerror(errno), pidfile);
+        unlink(pidfile);
+        exit(EXIT_FAILURE);
     }
     syslog(LOG_INFO, "Daemon running.");
 }

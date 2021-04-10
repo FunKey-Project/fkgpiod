@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <syslog.h>
 #include <linux/input.h>
 #include <linux/uinput.h>
 //#include "uinput_linux.h"
@@ -41,15 +42,15 @@
 #define ERROR_UINPUT
 
 #ifdef DEBUG_UINPUT
-  #define LOG_DEBUG(...) printf(__VA_ARGS__);
+    #define FK_DEBUG(...) syslog(LOG_DEBUG, __VA_ARGS__);
 #else
-  #define LOG_DEBUG(...)
+  #define FK_DEBUG(...)
 #endif
 
 #ifdef ERROR_UINPUT
-  #define LOG_ERROR(...) fprintf(stderr, "ERR: " __VA_ARGS__);
+  #define FK_ERROR(...) syslog(LOG_ERR, __VA_ARGS__);
 #else
-  #define LOG_DEBUG(...)
+  #define FK_DEBUG(...)
 #endif
 
 /* For compatibility with kernels having dates on 32 bits */
@@ -204,7 +205,7 @@ int sendKey(int key, int value)
   ie.value = value;
   ie.time.tv_sec = 0;
   ie.time.tv_usec = 0;
-  LOG_DEBUG("sendKey: %d = %d\n", key, value);
+  FK_DEBUG("sendKey: %d = %d\n", key, value);
   if(write(uidev_fd, &ie, sizeof(struct input_event_compat)) < 0)
     die("error: write");
 
@@ -238,7 +239,7 @@ static int sendRel(int dx, int dy)
 
 static int sendSync(void)
 {
-  LOG_DEBUG("sendSync\n");
+  FK_DEBUG("sendSync\n");
   //memset(&uidev_ev, 0, sizeof(struct input_event));
   struct input_event ie;
   ie.type = EV_SYN;

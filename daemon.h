@@ -27,7 +27,7 @@
 #ifndef _DAEMON_H_
 #define _DAEMON_H_
 
-void daemonize(char *rundir, char *pidfile);
+void daemonize(const char *ident, char *rundir, char *pidfile);
 void kill_daemon(char *pidfile);
 
 #endif

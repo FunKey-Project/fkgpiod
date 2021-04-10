@@ -4,7 +4,7 @@ TOOLS_CFLAGS	:= -Wall -std=c99 -D _DEFAULT_SOURCE
 #
 all: fkgpiod termfix
 
-fkgpiod: main.o daemon.o to_log.o parse_config.o mapping_list.o gpio_mapping.o gpio_utils.o gpio_axp209.o gpio_pcal6416a.o smbus.o uinput.o keydefs.o
+fkgpiod: main.o daemon.o parse_config.o mapping_list.o gpio_mapping.o gpio_utils.o gpio_axp209.o gpio_pcal6416a.o smbus.o uinput.o keydefs.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 termfix: termfix.o

@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include "mapping_list.h"
 #include "parse_config.h"
 
@@ -35,15 +36,15 @@
 #define ERROR_MAPPING_LIST
 
 #ifdef DEBUG_MAPPING_LIST
-    #define LOG_DEBUG(...) printf(__VA_ARGS__);
+    #define FK_DEBUG(...) syslog(LOG_DEBUG, __VA_ARGS__);
 #else
-    #define LOG_DEBUG(...)
+    #define FK_DEBUG(...)
 #endif
 
 #ifdef ERROR_MAPPING_LIST
-    #define LOG_ERROR(...) fprintf(stderr, "ERR: " __VA_ARGS__);
+    #define FK_ERROR(...) syslog(LOG_ERR, __VA_ARGS__);
 #else
-    #define LOG_ERROR(...)
+    #define FK_ERROR(...)
 #endif
 
 /* Compute the byte offset of a structure member */
@@ -179,7 +180,7 @@ bool insert_mapping(mapping_list_t *list, mapping_t *mapping)
         break;
 
     default:
-        LOG_ERROR("Unknown mapping type %d\n", mapping->type);
+        FK_ERROR("Unknown mapping type %d\n", mapping->type);
         return false;
     }
 
@@ -235,7 +236,7 @@ bool remove_mapping(mapping_list_t *list, mapping_t *mapping)
                 break;
 
             default:
-                LOG_ERROR("Unknown mapping type %d\n", tmp->type);
+                FK_ERROR("Unknown mapping type %d\n", tmp->type);
                 return false;
             }
             free(tmp);
@@ -273,7 +274,7 @@ void dump_mapping(mapping_t *mapping)
         break;
 
     default:
-        LOG_ERROR("Unknown mapping type %d\n", mapping->type);
+        FK_ERROR("Unknown mapping type %d\n", mapping->type);
         break;
     }
 }
