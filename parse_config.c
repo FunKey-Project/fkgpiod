@@ -197,6 +197,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
     uint32_t gpio_mask = 0;
     mapping_t *existing_mapping, new_mapping;
 
+    buffer[0] = '\0';
     token = strtok_r(line, " \t", &next_token);
     while (token != NULL) {
         switch (state) {
@@ -288,7 +289,10 @@ bool parse_config_line(char *line, mapping_list_t *list,
             }
         case STATE_LOAD:
         case STATE_TYPE:
-            strncpy(buffer, token, MAX_LINE_LENGTH);
+            if (buffer[0] != '\0') {
+                strncat(buffer, " ", MAX_LINE_LENGTH);
+            }
+            strncat(buffer, token, MAX_LINE_LENGTH);
             break;
 
 
