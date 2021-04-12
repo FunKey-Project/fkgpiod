@@ -38,12 +38,19 @@
 #include "uinput.h"
 
 //#define DEBUG_CONFIG
+#define NOTICE_CONFIG
 #define ERROR_CONFIG
 
 #ifdef DEBUG_CONFIG
     #define FK_DEBUG(...) syslog(LOG_DEBUG, __VA_ARGS__);
 #else
     #define FK_DEBUG(...)
+#endif
+
+#ifdef NOTICE_CONFIG
+    #define FK_NOTICE(...) syslog(LOG_NOTICE, __VA_ARGS__);
+#else
+    #define FK_NOTICE(...)
 #endif
 
 #ifdef ERROR_CONFIG
@@ -468,6 +475,7 @@ bool parse_config_file(const char *name, mapping_list_t *list,
     FILE *fp;
     int line_number = 0;
 
+    FK_NOTICE("LOAD file %s\n", name);
     if ((fp = fopen(name, "r")) == NULL) {
         FK_ERROR("Cannot open file \"%s\"\n", name);
         return false;
