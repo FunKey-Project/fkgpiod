@@ -205,7 +205,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
     mapping_t *existing_mapping, new_mapping;
 
     buffer[0] = '\0';
-    token = strtok_r(line, " \t", &next_token);
+    token = strtok_r(line, " \t\n", &next_token);
     while (token != NULL) {
         switch (state) {
         case STATE_INIT:
@@ -458,6 +458,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
         dump_mapping_list(list);
         break;
 
+    case STATE_INIT:
     case STATE_MAP:
        break;
 
