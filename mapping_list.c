@@ -31,6 +31,7 @@
 #include <syslog.h>
 #include "mapping_list.h"
 #include "parse_config.h"
+#include "uinput.h"
 
 //#define DEBUG_MAPPING_LIST
 #define ERROR_MAPPING_LIST
@@ -133,7 +134,9 @@ void clear_mapping_list(mapping_list_t *list)
             if (tmp->value.command != NULL) {
                 free(tmp->value.command);
             }
-        }
+        } else if (tmp->activated == true) {
+	    sendKey(tmp->value.keycode, 0);
+	}
         free(tmp);
     }
 }
@@ -233,6 +236,9 @@ bool remove_mapping(mapping_list_t *list, mapping_t *mapping)
                 break;
 
             case MAPPING_KEY:
+	        if (tmp->activated == true) {
+		    sendKey(tmp->value.keycode, 0);
+		}
                 break;
 
             default:
