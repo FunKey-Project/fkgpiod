@@ -27,6 +27,7 @@
 #ifndef _MAPPING_LIST_H_
 #define _MAPPING_LIST_H_
 
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -68,7 +69,7 @@ mapping_t *find_mapping(mapping_list_t *list, uint32_t gpio_mask);
 bool remove_mapping(mapping_list_t *list, mapping_t *mapping);
 void dump_mapping(mapping_t *mapping);
 void dump_mapping_list(mapping_list_t *list);
-void save_mapping(mapping_t *mapping);
-void save_mapping_list(mapping_list_t *list);
+bool save_mapping(FILE *fp, mapping_t *mapping);
+bool save_mapping_list(const char *name, mapping_list_t *list);
 
 #endif // _MAPPING_LIST_H_

@@ -27,6 +27,7 @@
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <linux/input.h>

@@ -286,7 +286,6 @@ bool parse_config_line(char *line, mapping_list_t *list,
 
         case STATE_CLEAR:
         case STATE_DUMP:
-	case STATE_SAVE:
             break;
 
         case STATE_SLEEP:
@@ -297,6 +296,7 @@ bool parse_config_line(char *line, mapping_list_t *list,
                 }
             }
         case STATE_LOAD:
+        case STATE_SAVE:
         case STATE_TYPE:
             if (buffer[0] != '\0') {
                 strncat(buffer, " ", MAX_LINE_LENGTH);
@@ -461,7 +461,8 @@ bool parse_config_line(char *line, mapping_list_t *list,
         break;
 
     case STATE_SAVE:
-        save_mapping_list(list);
+        FK_DEBUG("SAVE file \"%s\"\n", buffer);
+        return save_mapping_list(buffer, list);
         break;
 
     case STATE_INIT:

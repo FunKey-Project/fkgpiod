@@ -36,6 +36,7 @@ KEYUP <key_code>                                    Send a key up event with the
 LOAD <configuration_file>                           Load a configuration file
 MAP <button_combination> TO KEY <key_code>          Map a button combination to a keycode
 MAP <button_combination> TO COMMAND <shell_command> Map a button combination to a Shell command
+SAVE <configuration_file>                           Save to a configuration file
 SLEEP <delays_ms>                                   Sleep for the given delay in ms
 TYPE <character_string>                             Type in a character string
 UNMAP <button_combination>                          Unmap a button combination

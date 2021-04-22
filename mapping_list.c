@@ -25,6 +25,7 @@
  *  This file contains the mapping list handling functions
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -303,46 +304,84 @@ void dump_mapping_list(mapping_list_t *list)
 }
 
 /* Save a mapping */
-void save_mapping(mapping_t *mapping)
+bool save_mapping(FILE *fp, mapping_t *mapping)
 {
   int i, length;
     uint32_t gpio_mask;
 
-    printf("MAP ");
+    if (fprintf(fp, "MAP ") < 0) {
+        return false;
+    }
     for (i = 0, length = 0, gpio_mask = mapping->gpio_mask; i < MAX_NUM_GPIO;
         i++, gpio_mask >>= 1) {
         if (gpio_mask & 1) {
-            printf("%s%s", gpio_name(i), gpio_mask == 1 ? " " : "+");
-	    length += strlen(gpio_name(i)) + 1;
+            if (fprintf(fp, "%s%s", gpio_name(i), gpio_mask == 1 ? " " : "+") < 0) {
+                return false;
+            }
+            length += strlen(gpio_name(i)) + 1;
         }
     }
     for (i = 9 - length; i > 0; i--) {
-        printf(" ");
+        if (fprintf(fp, " ") < 0) {
+            return false;
+        }
     }
     switch (mapping->type) {
     case MAPPING_COMMAND:
-        printf("TO COMMAND %s\n", mapping->value.command);
+        if (fprintf(fp, "TO COMMAND %s\n", mapping->value.command) < 0) {
+            return false;
+        }
         break;
 
     case MAPPING_KEY:
-        printf("TO KEY     %s\n", keycode_name(mapping->value.keycode));
+        if (fprintf(fp, "TO KEY     %s\n",
+            keycode_name(mapping->value.keycode)) < 0) {
+            return false;
+        }
         break;
 
     default:
         FK_ERROR("Unknown mapping type %d\n", mapping->type);
+        return false;
         break;
     }
+    return true;
 }
 
 /* Save a mapping list */
-void save_mapping_list(mapping_list_t *list)
+bool save_mapping_list(const char *name, mapping_list_t *list)
 {
     struct mapping_list_t *p;
     mapping_t *tmp;
+    FILE *fp;
 
-    printf("CLEAR\n");
+    if (name[0] == '\0') {
+        fp = stdout;
+    } else {
+        fp = fopen(name, "w");
+    }
+    if (fp == NULL) {
+        FK_ERROR("Cannot open save file \"%s\": %s\n", name, strerror(errno));
+        return false;
+    }
+    fprintf(fp, "CLEAR\n");
     list_for_each_prev(p, list) {
         tmp = list_entry(p, mapping_t, mappings);
-        save_mapping(tmp);
+        if (save_mapping(fp, tmp) == false) {
+            FK_ERROR("Cannot write to save file \"%s\": %s\n", name,
+                strerror(errno));
+            if (fp != stdout) {
+                fclose(fp);
+            }
+            return false;
+        }
     }
+    if (fp == stdout) {
+        return true;
+    }
+    if (fclose(fp) < 0) {
+        FK_ERROR("Cannot close save file \"%s\": %s\n", name, strerror(errno));
+        return false;
+    }
+    return true;
 }
