@@ -69,6 +69,10 @@
 #define list_for_each(pos, head) \
     for (pos = (head)->next; pos != (head); pos = pos->next)
 
+/* Loop over the list nodes backwards */
+#define list_for_each_prev(pos, head) \
+    for (pos = (head)->prev; pos != (head); pos = pos->prev)
+
 /* Loop over the nodes of a list, the node may be destroyed safely during the
  * process
  */
@@ -337,7 +341,7 @@ void save_mapping_list(mapping_list_t *list)
     mapping_t *tmp;
 
     printf("CLEAR\n");
-    list_for_each(p, list) {
+    list_for_each_prev(p, list) {
         tmp = list_entry(p, mapping_t, mappings);
         save_mapping(tmp);
     }
