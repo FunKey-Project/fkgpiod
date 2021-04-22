@@ -297,3 +297,48 @@ void dump_mapping_list(mapping_list_t *list)
         printf("\n");
     }
 }
+
+/* Save a mapping */
+void save_mapping(mapping_t *mapping)
+{
+  int i, length;
+    uint32_t gpio_mask;
+
+    printf("MAP ");
+    for (i = 0, length = 0, gpio_mask = mapping->gpio_mask; i < MAX_NUM_GPIO;
+        i++, gpio_mask >>= 1) {
+        if (gpio_mask & 1) {
+            printf("%s%s", gpio_name(i), gpio_mask == 1 ? " " : "+");
+	    length += strlen(gpio_name(i)) + 1;
+        }
+    }
+    for (i = 9 - length; i > 0; i--) {
+        printf(" ");
+    }
+    switch (mapping->type) {
+    case MAPPING_COMMAND:
+        printf("TO COMMAND %s\n", mapping->value.command);
+        break;
+
+    case MAPPING_KEY:
+        printf("TO KEY     %s\n", keycode_name(mapping->value.keycode));
+        break;
+
+    default:
+        FK_ERROR("Unknown mapping type %d\n", mapping->type);
+        break;
+    }
+}
+
+/* Save a mapping list */
+void save_mapping_list(mapping_list_t *list)
+{
+    struct mapping_list_t *p;
+    mapping_t *tmp;
+
+    printf("CLEAR\n");
+    list_for_each(p, list) {
+        tmp = list_entry(p, mapping_t, mappings);
+        save_mapping(tmp);
+    }
+}
