@@ -359,6 +359,7 @@ bool save_mapping_list(const char *name, mapping_list_t *list)
         fp = stdout;
     } else {
         fp = fopen(name, "w");
+	FK_NOTICE("SAVE file %s\n", name);
     }
     if (fp == NULL) {
         FK_ERROR("Cannot open save file \"%s\": %s\n", name, strerror(errno));
