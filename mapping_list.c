@@ -35,12 +35,19 @@
 #include "uinput.h"
 
 //#define DEBUG_MAPPING_LIST
+#define NOTICE_MAPPING_LIST
 #define ERROR_MAPPING_LIST
 
 #ifdef DEBUG_MAPPING_LIST
     #define FK_DEBUG(...) syslog(LOG_DEBUG, __VA_ARGS__);
 #else
     #define FK_DEBUG(...)
+#endif
+
+#ifdef NOTICE_MAPPING_LIST
+    #define FK_NOTICE(...) syslog(LOG_NOTICE, __VA_ARGS__);
+#else
+    #define FK_NOTICE(...)
 #endif
 
 #ifdef ERROR_MAPPING_LIST
