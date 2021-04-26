@@ -225,7 +225,17 @@ int main(int argc, char *argv[])
     init_uinput();
 
     /* Initialize the GPIO mapping */
-    init_gpio_mapping(config_file, &mapping_list);
+    if (init_gpio_mapping(config_file, &mapping_list) == false) {
+
+        /* Close the uinput device */
+        close_uinput();
+	if (daemon) {
+
+	    /* Close the syslog */
+	    closelog();
+	}
+        exit(EXIT_FAILURE);
+    }
     while (true) {
 
         /* Main loop to handle the GPIOs */
@@ -242,5 +252,5 @@ int main(int argc, char *argv[])
         /* Close the syslog */
         closelog();
     }
-   return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
