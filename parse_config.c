@@ -359,7 +359,6 @@ bool parse_config_line(char *line, mapping_list_t *list,
                 gpio_mask);
             return false;
         }
-        *monitored_gpio_mask &= ~gpio_mask;
         break;
 
     case STATE_CLEAR:
