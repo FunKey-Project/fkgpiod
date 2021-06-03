@@ -91,7 +91,7 @@
 #define NOE_GPIO_MASK                           (1 << 10)
 
 /* Shell command for shutdown upon receiving either long PEK or NOE signal */
-#define SHELL_COMMAND_SHUTDOWN                  "sched_shutdown 0.1"
+#define SHELL_COMMAND_SHUTDOWN                  "powerdown schedule 0.1"
 
 /* PCAL6416A/PCAL9539A I2C GPIO expander chip pseudo-file descriptor */
 static int fd_pcal6416a;
